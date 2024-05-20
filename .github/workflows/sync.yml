@@ -7,7 +7,7 @@ on:
     - cron: "*/5 * * * *"
 
 jobs:
-  update_sdk:
+  update_SEP:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
