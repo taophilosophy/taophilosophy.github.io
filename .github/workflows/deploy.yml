@@ -1,10 +1,11 @@
 name: 部署 GitPage
 
 on:
-  workflow_run:
-    workflows: [🔗 自动拉取]
-      types:
-        - completed
+  push:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
   
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
