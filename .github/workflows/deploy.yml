@@ -33,6 +33,11 @@ jobs:
         with:
           fetch-depth: 0 # lastUpdated 不需要
           submodules: 'true'
+          
+      - name: Add swap
+        uses: actionhippie/swap-space@v1
+        with:
+           size: 32G
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
