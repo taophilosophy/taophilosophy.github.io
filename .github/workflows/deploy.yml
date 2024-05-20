@@ -1,7 +1,6 @@
 name: 部署 GitPage
 
 on:
-  repository_dispatch:
   workflow_run:
     workflows: [🔗 自动拉取]
       types:
