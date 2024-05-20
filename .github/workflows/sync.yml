@@ -20,5 +20,5 @@ jobs:
           git submodule update --init --recursive --remote
           git config --global user.name "ykla"
           git config --global user.email "yklaxds@gmail.com"
-          git commit -am "同步 SEP-CN" || exit 0
-          git push || exit 0  
+          git commit -am "同步 SEP-CN" || exit 1
+          git push || exit 1  
