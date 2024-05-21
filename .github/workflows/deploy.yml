@@ -21,7 +21,7 @@ concurrency:
 jobs:
   # 构建工作
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Setting TimeZone to UTC+8
         uses: szenius/set-timezone@v2.0
@@ -72,7 +72,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     name: Deploy
     steps:
       - name: Setting TimeZone to UTC+8
