@@ -32,7 +32,7 @@ jobs:
       - name: Add swap
         uses: actionhippie/swap-space@v1
         with:
-           size: 32G
+           size: 64G
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -44,7 +44,7 @@ jobs:
       - name: Build with VitePress
         run:  yarn docs:build 
         env:
-          NODE_OPTIONS: --max_old_space_size=32768
+          NODE_OPTIONS: --max_old_space_size=81920
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
