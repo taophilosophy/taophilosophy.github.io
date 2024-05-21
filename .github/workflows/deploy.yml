@@ -21,7 +21,7 @@ concurrency:
 jobs:
   # 构建工作
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Setting TimeZone to UTC+8
         uses: szenius/set-timezone@v2.0
