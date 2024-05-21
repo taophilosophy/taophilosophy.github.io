@@ -4,6 +4,7 @@
   "dependencies": {
     "vitepress": "^1.2.0",
 	"vite-plugin-vitepress-auto-nav": "2.3.0",
+	"markdown-it-footnote": "^4.0.0",
 	"markdown-it-mathjax3": "4.3.2"
   },
   "scripts": {
