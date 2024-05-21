@@ -72,7 +72,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Deploy
     steps:
       - name: Setting TimeZone to UTC+8
