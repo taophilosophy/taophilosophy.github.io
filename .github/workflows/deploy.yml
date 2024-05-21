@@ -46,10 +46,14 @@ jobs:
         env:
           NODE_OPTIONS: --max_old_space_size=32768
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: doc/.vitepress/dist
-
+      - name: Show Usage 
+        run: |
+         du -h ${{ runner.temp }}/artifact.tar
+         du -sh doc/.vitepress/dist
+         du -sh doc
   # 部署工作
   deploy:
     environment:
