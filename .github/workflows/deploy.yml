@@ -44,7 +44,7 @@ jobs:
       - name: Build with VitePress
         run:  yarn docs:build 
         env:
-          NODE_OPTIONS: --max_old_space_size=11000
+          NODE_OPTIONS: --max_old_space_size=16384
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
