@@ -6,13 +6,16 @@ on:
   schedule:
     - cron: "*/5 * * * *"
 
-env:
-  TZ: Asia/Shanghai
 
 jobs:
   update_SEP:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Setting TimeZone to UTC+8
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
       - name: Checkout
         uses: actions/checkout@v4
         with:
