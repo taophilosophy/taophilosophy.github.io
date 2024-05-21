@@ -36,15 +36,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+        env:
+          NODE_OPTIONS: --max_old_space_size=16384
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install dependencies
         run: yarn install
       - name: Build with VitePress
         run:  yarn docs:build 
-        env:
-          NODE_OPTIONS: --max_old_space_size=16384
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
