@@ -37,13 +37,15 @@ jobs:
         with:
           fetch-depth: 0 # lastUpdated 需要
           submodules: 'true'
-          
+      - uses: pnpm/action-setup@v3 
+        with:
+          version: latest
       - name: Add swap
         uses: actionhippie/swap-space@v1
         with:
            size: 16G
       - name: Setup Node
-        uses: pnpm/action-setup@v4
+        uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Setup Pages
