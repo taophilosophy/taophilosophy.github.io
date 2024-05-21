@@ -6,6 +6,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/30 * * * *"
+env:
+  TZ: Asia/Shanghai
   
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
