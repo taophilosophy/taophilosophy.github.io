@@ -6,8 +6,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/30 * * * *"
-env:
-  TZ: Asia/Shanghai
   
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
@@ -25,6 +23,10 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
+      - name: Setting TimeZone to UTC+8
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -65,6 +67,10 @@ jobs:
     runs-on: ubuntu-24.04
     name: Deploy
     steps:
+      - name: Setting TimeZone to UTC+8
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
