@@ -27,8 +27,11 @@ jobs:
         uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Shanghai"
+      - name: Show the timezone
         run: |
-           date
+           date 
+           uname -r
+           free -hg 
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -74,6 +77,7 @@ jobs:
         uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Shanghai"
+      - name: Show the timezone
         run: |
            date
       - name: Deploy to GitHub Pages
