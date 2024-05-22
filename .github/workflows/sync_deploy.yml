@@ -52,6 +52,7 @@ jobs:
           
   build:
     needs: sync
+    if: ${{ success() }}
     runs-on: ubuntu-24.04
     name: build
     steps:
@@ -104,6 +105,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
+    if: ${{ success() }}
     runs-on: ubuntu-24.04
     name: Deploy
     steps:
