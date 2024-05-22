@@ -48,6 +48,7 @@ jobs:
     steps:    
       - name: Show the timezone
         run: |
+           echo "无事可做"
            exit 0
           
   build:
