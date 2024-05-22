@@ -1,0 +1,85 @@
+name: 非自动部署 GitPage
+
+on: 
+  push:
+  repository_dispatch:
+  workflow_dispatch:
+  
+# 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # 构建工作
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setting TimeZone to UTC+8
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
+      - name: Show the timezone
+        run: |
+           date 
+           uname -r
+           free -hg 
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # lastUpdated 需要
+          submodules: 'true'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Add swap
+        uses: actionhippie/swap-space@v1
+        with:
+           size: 16G
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Install dependencies
+        run:  pnpm install
+      - name: Build with VitePress
+        run:  pnpm run docs:build
+        env:
+          NODE_OPTIONS: --max_old_space_size=16384
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc/.vitepress/dist
+      - name: Show Usage 
+        run: |
+         du -h ${{ runner.temp }}/artifact.tar
+         du -sh doc/.vitepress/dist
+         du -sh doc
+         date
+  # 部署工作
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Setting TimeZone to UTC+8
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
+      - name: Show the timezone
+        run: |
+           date
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

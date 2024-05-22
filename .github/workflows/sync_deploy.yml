@@ -40,6 +40,15 @@ jobs:
           git config --global user.email "yklaxds@gmail.com"
           git commit -am "同步 SEP-CN" 
           git push
+ 
+  nothing:
+    needs: sync
+    if: ${{ failure() }}
+    runs-on: ubuntu-24.04
+    steps:    
+      - name: Show the timezone
+        run: |
+           exit 0
           
   build:
     needs: sync
