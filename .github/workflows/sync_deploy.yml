@@ -46,7 +46,7 @@ jobs:
     if: ${{ failure() }}
     runs-on: ubuntu-24.04
     steps:    
-      - name: Show the timezone
+      - name: Show the status 
         run: |
            echo "无事可做"
            exit 0
