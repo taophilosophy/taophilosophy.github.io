@@ -40,7 +40,7 @@ jobs:
           git config --global user.email "yklaxds@gmail.com"
           git commit -am "同步 SEP-CN" 
           git push
-        continue-on-error: true
+        
   nothing:
     needs: sync
     if: ${{ failure() }}
