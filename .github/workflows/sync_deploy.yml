@@ -46,7 +46,7 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $changes_made
+          [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $vars.changes_made
           printf '%s\n'  ${{ vars.changes_made }}
 
       - name: 提交更改
