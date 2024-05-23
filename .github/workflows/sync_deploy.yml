@@ -119,7 +119,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/.vitepress/dist
+          path: doc/.vitepress/dist
 
       - name: 显示使用情况
         run: |
