@@ -46,8 +46,8 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_OUTPUT" || echo "changes_made=false" >> "$GITHUB_ENV"
-          echo Test
+          [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
+          echo "-----------------------------------------"
           printf '%s\n'  "$changes_made"
 
       - name: 提交更改
@@ -55,6 +55,7 @@ jobs:
         id: commit
         run: |
           printf '%s\n' "$changes_made"
+          echo "-----------------------------------------"
           git add .
           git commit -m "同步 SEP-CN"
           git push
