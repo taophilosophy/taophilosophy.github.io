@@ -47,11 +47,9 @@ jobs:
         id: check_changes
         run: |
           [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
-          echo "-----------------------------------------"
-          printf '%s\n' "$changes_made"
           
       - name: 提交更改
-        if: env.changes_made == 'true'
+   #     if: env.changes_made == 'true'
         id: commit
         run: |
           printf '%s\n' "$changes_made"
