@@ -46,7 +46,7 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          if git diff --quiet; then
+          if git diff; then
             echo "changes_made=false" >> $GITHUB_ENV
           else
             echo "changes_made=true" >> $GITHUB_ENV
