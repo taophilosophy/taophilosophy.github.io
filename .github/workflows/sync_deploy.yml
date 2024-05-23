@@ -51,6 +51,7 @@ jobs:
           else
             echo "changes_made=true" >> $GITHUB_ENV
           fi
+          echo $GITHUB_ENV
 
       - name: 提交更改
         if: env.changes_made == 'true'
