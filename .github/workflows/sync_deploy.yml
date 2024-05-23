@@ -47,11 +47,11 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=false" >> $GITHUB_ENV || echo "changes_made=true" >> $GITHUB_ENV
+          [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $GITHUB_ENV
           printf '%s\n'  $changes_made
 
       - name: 提交更改
-        if: env.changes_made == 'true'
+        if: env.changes_made == 'false'
         run: |
           git add .
           git commit -m "同步 SEP-CN"
