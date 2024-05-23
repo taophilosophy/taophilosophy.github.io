@@ -53,10 +53,11 @@ jobs:
         if: ${{ env.changes_made == 'true' }}
         id: commit
         run: |
+          printf '%s\n' "$changes_made"
           git add .
           git commit -m "同步 SEP-CN"
           git push
-          printf '%s\n' "$changes_made"
+
           
   nothing:
     needs: sync
