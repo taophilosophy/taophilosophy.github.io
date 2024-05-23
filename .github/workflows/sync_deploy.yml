@@ -41,20 +41,16 @@ jobs:
           git config --global user.email "yklaxds@gmail.com"
           git commit -am "同步 SEP-CN" 
           git push
-         
-       
-  nothing:
-    needs: sync
-    runs-on: ubuntu-24.04
-    steps:    
+          
       - name: Show the status 
+        if: failure()
         run: |
            echo "无事可做"
            exit 0
           
   build:
-    needs: [sync, nothing]
-    if: ${{ needs.sync.result == 'success' && needs.nothing.result != 'success' }}
+    needs: sync
+    if: ${{ needs.sync.result == 'success'}}
     runs-on: ubuntu-24.04
     name: build
     steps:
