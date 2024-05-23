@@ -19,6 +19,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-24.04
+    continue-on-error: true
     steps:
 
       - name: Setting TimeZone to UTC+8
@@ -40,7 +41,7 @@ jobs:
           git config --global user.email "yklaxds@gmail.com"
           git commit -am "同步 SEP-CN" 
           git push
-        continue-on-error: true
+         
        
   nothing:
     needs: sync
