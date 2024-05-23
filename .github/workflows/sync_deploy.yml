@@ -20,7 +20,7 @@ jobs:
   sync:
     runs-on: ubuntu-24.04
     outputs:
-      changes_made: ${{ steps.commit.outputs.changes_made }}
+      changes_made: ${{ steps.check_changes.outputs.changes_made }}
     steps:
       - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
@@ -47,7 +47,7 @@ jobs:
         id: check_changes
         run: |
           [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
-          
+          # 创建或更新环境变量的步骤无法访问新值，但在作业中的所有后续步骤均可访问。<https://docs.github.com/zh/enterprise-cloud@latest/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable>
       - name: 提交更改
         if: ${{ env.changes_made== 'true' }}
         id: commit
