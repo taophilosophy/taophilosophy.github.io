@@ -46,12 +46,14 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
+          echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_ENV && echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_OUTPUT
+          #[[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
           # 创建或更新环境变量的步骤无法访问新值，但在作业中的所有后续步骤均可访问。<https://docs.github.com/zh/enterprise-cloud@latest/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable>
       - name: 提交更改
         if: ${{ env.changes_made== 'true' }}
         id: commit
         run: |
+          echo "-----------------------------------------"
           printf '%s\n' "$changes_made"
           echo "-----------------------------------------"
           git add .
