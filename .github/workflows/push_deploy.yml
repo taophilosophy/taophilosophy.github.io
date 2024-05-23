@@ -52,10 +52,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist
-          overwrite: true
           retention-days: 0
-          if-no-files-found: error
-          compression-level: 9
       - name: Show Usage 
         run: |
          du -h ${{ runner.temp }}/artifact.tar
