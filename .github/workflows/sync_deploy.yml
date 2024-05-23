@@ -6,8 +6,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/5 * * * *"
-env:
-  changes_made: true
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
   contents: write
@@ -48,7 +46,7 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $changes_made
+          [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $GITHUB_ENV
           echo  $changes_made
 
       - name: 提交更改
@@ -67,6 +65,7 @@ jobs:
     steps:
       - name: 显示状态
         run: |
+          echo $changes_made
           echo "无事可做"
           exit 0
 
