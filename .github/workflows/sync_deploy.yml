@@ -63,7 +63,7 @@ jobs:
   nothing:
     needs: sync
     runs-on: ubuntu-24.04
-    if: ${{ needs.sync.outputs.changes_made == 'false' }}
+    if: ${{ needs.sync.outputs.changes_made != 'true' }}
     steps:
       - name: 显示状态
         run: |
