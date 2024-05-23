@@ -46,11 +46,9 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_OUTPUT" || echo "changes_made=false" >> "$GITHUB_OUTPUT"
+          [[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
           echo "-----------------------------------------"
-          echo "changes_made=false" >> "$GITHUB_OUTPUT"
-          echo "-----------------------------------------"
-          echo $changes_made
+          printf '%s\n' "$changes_made"
           
       - name: 提交更改
         if: env.changes_made == 'true'
