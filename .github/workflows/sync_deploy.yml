@@ -50,9 +50,7 @@ jobs:
           printf '%s\n'  "$changes_made"
 
       - name: 提交更改
-        env: 
-           changes_made: ${{ steps.commit.outputs.changes_made }}
-        if: ${{ env.changes_made == 'false' }}
+        if: ${{ steps.check_changes.outputs.changes_made == 'true' }}
         id: commit
         run: |
           printf '%s\n' "$changes_made"
