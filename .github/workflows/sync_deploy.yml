@@ -20,7 +20,7 @@ jobs:
   sync:
     runs-on: ubuntu-24.04
     env: 
-    changes_made: true
+      changes_made: true
     outputs:
       changes_made: ${{ steps.commit.outputs.changes_made }}
     steps:
