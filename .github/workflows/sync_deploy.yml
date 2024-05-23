@@ -67,7 +67,6 @@ jobs:
     steps:
       - name: 显示状态
         run: |
-          echo $changes_made
           echo "无事可做"
           exit 0
 
@@ -119,7 +118,10 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/.vitepress/dist
+          overwrite: true
+          retention-days: 0
+          if-no-files-found: error
+          compression-level: 9
 
       - name: 显示使用情况
         run: |
