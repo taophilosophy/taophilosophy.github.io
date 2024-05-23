@@ -1,7 +1,6 @@
 name: 🔗 自动拉取-部署
 
 on:
-  push: 
   repository_dispatch:
   workflow_dispatch:
   schedule:
@@ -47,7 +46,7 @@ jobs:
         id: check_changes
         run: |
           echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_ENV && echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_OUTPUT
-          #[[ $(git diff) ]] && echo "changes_made=true" >> "$GITHUB_ENV" || echo "changes_made=false" >> "$GITHUB_ENV"
+          #同时设置设置环境变量和输出变量，两个不一样
           # 创建或更新环境变量的步骤无法访问新值，但在作业中的所有后续步骤均可访问。<https://docs.github.com/zh/enterprise-cloud@latest/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable>
       - name: 提交更改
         if: ${{ env.changes_made== 'true' }}
