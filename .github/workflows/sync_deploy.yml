@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "*/5 * * * *"
-
+env:
+  env_var: ${{ vars.changes_made }}
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
   contents: write
@@ -20,8 +21,6 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-24.04
-    outputs:
-      changes_made: ${{ steps.check_changes.outputs.changes_made }}
     steps:
       - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
@@ -47,8 +46,8 @@ jobs:
       - name: 检查是否有更改
         id: check_changes
         run: |
-          [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $GITHUB_OUTPUT
-          printf '%s\n'  $changes_made
+          [[ $(git diff) ]] && echo "false" || echo "true" >> ${{ vars.changes_made }}
+          printf '%s\n'  ${{ vars.changes_made }}
 
       - name: 提交更改
         env:
@@ -57,12 +56,12 @@ jobs:
           git add .
           git commit -m "同步 SEP-CN"
           git push
-          printf '%s\n'  $changes_made
+          printf '%s\n'  ${{ vars.changes_made }}
           
   nothing:
     needs: sync
     runs-on: ubuntu-24.04
-    if: ${{ needs.sync.outputs.changes_made == 'false' }}
+    if: ${{ vars.changes_made == 'false' }}
     steps:
       - name: 显示状态
         run: |
@@ -72,7 +71,7 @@ jobs:
   build:
     needs: sync
     runs-on: ubuntu-24.04
-    if: ${{ needs.sync.outputs.changes_made == 'true' }}
+    if: ${{ vars.changes_made == 'true' }}
     steps:
       - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
