@@ -13,7 +13,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
+# 如果设置为 true 会造成提交成功但编译被取消且无法再次编译直至下一次提交
 
 jobs:
   sync:
