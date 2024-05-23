@@ -22,7 +22,7 @@ jobs:
   sync:
     runs-on: ubuntu-24.04
     outputs:
-      changes_made: ${{ steps.check_changes.outputs.changes_made }}
+      changes_made: ${{ steps.commit.outputs.changes_made }}
     steps:
       - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
@@ -53,6 +53,7 @@ jobs:
 
       - name: 提交更改
         if: ${{ env.changes_made == 'true' }}
+        id: commit
         run: |
           git add .
           git commit -m "同步 SEP-CN"
