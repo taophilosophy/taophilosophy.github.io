@@ -50,8 +50,7 @@ jobs:
           printf '%s\n'  ${{ vars.changes_made }}
 
       - name: 提交更改
-        env:
-           changes_made: true
+        if: ${{ vars.USE_VARIABLES == 'true' }}
         run: |
           git add .
           git commit -m "同步 SEP-CN"
