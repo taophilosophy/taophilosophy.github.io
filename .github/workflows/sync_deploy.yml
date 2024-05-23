@@ -50,7 +50,7 @@ jobs:
           printf '%s\n'  "$changes_made"
 
       - name: 提交更改
-        if: env.changes_made == 'true'
+        if: var.changes_made == 'true'
         id: commit
         run: |
           printf '%s\n' "$changes_made"
