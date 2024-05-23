@@ -51,7 +51,7 @@ jobs:
           else
             echo "changes_made=true" >> $GITHUB_ENV
           fi
-          echo $GITHUB_ENV
+          cat "$changes_made"
 
       - name: 提交更改
         if: env.changes_made == 'true'
@@ -59,7 +59,7 @@ jobs:
           git add .
           git commit -m "同步 SEP-CN"
           git push
-
+          cat "$changes_made"
   nothing:
     runs-on: ubuntu-24.04
     needs: sync
