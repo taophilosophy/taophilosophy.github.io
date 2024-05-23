@@ -56,7 +56,7 @@ jobs:
           printf '%s\n' "$changes_made"
           echo "-----------------------------------------"
           git add .
-          git commit -m "同步 SEP-CN"
+          git commit -m "sync SEP-CN"
           git push
 
           
@@ -118,10 +118,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
         with:
-          overwrite: true
-          retention-days: 0
-          if-no-files-found: error
-          compression-level: 9
+          path: docs/.vitepress/dist
 
       - name: 显示使用情况
         run: |
