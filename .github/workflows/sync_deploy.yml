@@ -47,7 +47,7 @@ jobs:
         id: check_changes
         run: |
           [[ $(git diff) ]] && echo "changes_made=false" || echo "changes_made=true" >> $env_var
-          printf '%s\n'  ${{ vars.changes_made }}
+          printf '%s\n'  $env_var
 
       - name: 提交更改
         if: ${{ vars.changes_made == 'true' }}
@@ -55,7 +55,7 @@ jobs:
           git add .
           git commit -m "同步 SEP-CN"
           git push
-          printf '%s\n'  ${{ vars.changes_made }}
+          printf '%s\n'  $env_var
           
   nothing:
     needs: sync
