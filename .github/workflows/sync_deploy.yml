@@ -19,7 +19,6 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-24.04
-    continue-on-error: true
     steps:
 
       - name: Setting TimeZone to UTC+8
@@ -35,6 +34,7 @@ jobs:
           fetch-depth: 0        
 
       - name: Update submodules
+        continue-on-error: true
         run: |
           git submodule update --init --recursive --remote
           git config --global user.name "ykla"
