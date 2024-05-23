@@ -53,8 +53,8 @@ jobs:
            exit 0
           
   build:
-    needs: sync
-    if: ${{ needs.sync.result == 'success' }}
+    needs: [sync, nothing]
+    if: ${{ needs.sync.result == 'success' && needs.nothing.result != 'success' }}
     runs-on: ubuntu-24.04
     name: build
     steps:
