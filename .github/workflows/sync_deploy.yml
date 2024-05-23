@@ -52,7 +52,7 @@ jobs:
       - name: 提交更改
         env: 
            changes_made: ${{ steps.commit.outputs.changes_made }}
-        if: ${{ env.changes_made == 'true' }}
+        if: ${{ env.changes_made == 'false' }}
         id: commit
         run: |
           printf '%s\n' "$changes_made"
