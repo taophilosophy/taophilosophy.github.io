@@ -53,10 +53,13 @@ jobs:
         run:  pnpm run docs:build
         env:
           NODE_OPTIONS: --max_old_space_size=16384
-      - name: Upload artifact
+      - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/.vitepress/dist
+          overwrite: true
+          retention-days: 0
+          if-no-files-found: error
+          compression-level: 9
       - name: Show Usage 
         run: |
          du -h ${{ runner.temp }}/artifact.tar
