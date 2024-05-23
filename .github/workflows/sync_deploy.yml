@@ -11,108 +11,137 @@ permissions:
   contents: write
   pages: write
   id-token: write
-  
+
 concurrency:
   group: pages
   cancel-in-progress: true
-  
+
 jobs:
   sync:
     runs-on: ubuntu-24.04
+    outputs:
+      changes_made: ${{ steps.check_changes.outputs.changes_made }}
     steps:
-
-      - name: Setting TimeZone to UTC+8
+      - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Shanghai"
-      - name: Show the timezone
-        run: |
-           date
-      - name: Checkout
+
+      - name: 显示当前时区
+        run: date
+
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0        
+          fetch-depth: 0
 
-      - name: Update submodules
+      - name: 更新子模块
+        run: git submodule update --init --recursive --remote
+
+      - name: 配置 git
         run: |
-          git submodule update --init --recursive --remote
           git config --global user.name "ykla"
           git config --global user.email "yklaxds@gmail.com"
-          git commit -am "同步 SEP-CN" 
-          git push
-          
-      - name: Show the status 
-        if: failure()
+
+      - name: 检查是否有更改
+        id: check_changes
         run: |
-           echo "无事可做"
-           exit 0
-          
-  build:
-    needs: sync
-    if: ${{ needs.sync.result == 'success'}}
+          if git diff --quiet; then
+            echo "changes_made=false" >> $GITHUB_ENV
+          else
+            echo "changes_made=true" >> $GITHUB_ENV
+          fi
+
+      - name: 提交更改
+        if: env.changes_made == 'true'
+        run: |
+          git add .
+          git commit -m "同步 SEP-CN"
+          git push
+
+  nothing:
     runs-on: ubuntu-24.04
-    name: build
+    needs: sync
+    if: ${{ needs.sync.outputs.changes_made == 'false' }}
     steps:
-      - name: Setting TimeZone to UTC+8
+      - name: 显示状态
+        run: |
+          echo "无事可做"
+          exit 0
+
+  build:
+    runs-on: ubuntu-24.04
+    needs: sync
+    if: ${{ needs.sync.outputs.changes_made == 'true' }}
+    steps:
+      - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Shanghai"
-      - name: Show the timezone
-        run: |
-           date    
-      - name: Checkout
+
+      - name: 显示当前时区
+        run: date
+
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # lastUpdated 需要
+          fetch-depth: 0
           submodules: 'true'
+
       - uses: pnpm/action-setup@v4
         with:
           version: latest
-      - name: Add swap
+
+      - name: 添加交换空间
         uses: actionhippie/swap-space@v1
         with:
-           size: 16G
-      - name: Setup Node
+          size: 16G
+
+      - name: 设置 Node 环境
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Setup Pages
+
+      - name: 配置 Pages
         uses: actions/configure-pages@v5
-      - name: Install dependencies
-        run:  pnpm install
-      - name: Build with VitePress
-        run:  pnpm run docs:build
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 使用 VitePress 构建
+        run: |
+          pnpm run docs:build
         env:
           NODE_OPTIONS: --max_old_space_size=16384
-      - name: Upload artifact
+
+      - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
         with:
           path: doc/.vitepress/dist
-      - name: Show Usage 
+
+      - name: 显示使用情况
         run: |
-         du -h ${{ runner.temp }}/artifact.tar
-         du -sh doc/.vitepress/dist
-         du -sh doc
-         date
-         
-  # 部署工作
-  
+          du -h ${{ runner.temp }}/artifact.tar
+          du -sh doc/.vitepress/dist
+          du -sh doc
+          date
+
   deploy:
+    runs-on: ubuntu-24.04
+    needs: build
+    if: ${{ success() }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-    if: ${{ success() }}
-    runs-on: ubuntu-24.04
-    name: Deploy
     steps:
-      - name: Setting TimeZone to UTC+8
+      - name: 设置时区为 UTC+8
         uses: szenius/set-timezone@v2.0
         with:
           timezoneLinux: "Asia/Shanghai"
-      - name: Show the timezone
-        run: |
-           date
-      - name: Deploy to GitHub Pages
+
+      - name: 显示当前时区
+        run: date
+
+      - name: 部署到 GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
