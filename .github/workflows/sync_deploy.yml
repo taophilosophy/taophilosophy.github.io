@@ -19,6 +19,8 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-24.04
+    env: 
+    changes_made: true
     outputs:
       changes_made: ${{ steps.commit.outputs.changes_made }}
     steps:
@@ -50,7 +52,7 @@ jobs:
           printf '%s\n'  "$changes_made"
 
       - name: 提交更改
-       # if: env.changes_made == 'true'
+        if: env.changes_made == 'true'
         id: commit
         run: |
           printf '%s\n' "$changes_made"
