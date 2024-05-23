@@ -34,7 +34,6 @@ jobs:
           fetch-depth: 0        
 
       - name: Update submodules
-        continue-on-error: true
         run: |
           git submodule update --init --recursive --remote
           git config --global user.name "ykla"
