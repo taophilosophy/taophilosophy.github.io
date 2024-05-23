@@ -40,10 +40,10 @@ jobs:
           git config --global user.email "yklaxds@gmail.com"
           git commit -am "同步 SEP-CN" 
           git push
-        
+        continue-on-error: true
+       
   nothing:
     needs: sync
-    if: ${{ failure() }}
     runs-on: ubuntu-24.04
     steps:    
       - name: Show the status 
@@ -53,7 +53,7 @@ jobs:
           
   build:
     needs: sync
-    if: ${{ success() }}
+    if: ${{ needs.sync.result == 'success' }}
     runs-on: ubuntu-24.04
     name: build
     steps:
