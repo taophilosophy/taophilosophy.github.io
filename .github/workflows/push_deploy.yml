@@ -56,8 +56,8 @@ jobs:
       - name: Show Usage 
         run: |
          du -h ${{ runner.temp }}/artifact.tar
-         du -sh doc/.vitepress/dist
-         du -sh doc
+         du -sh docs/.vitepress/dist
+         du -sh docs
          date
   # 部署工作
   deploy:

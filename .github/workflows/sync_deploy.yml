@@ -120,14 +120,14 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
         with:
-          path: doc/.vitepress/dist
+          path: docs/.vitepress/dist
           retention-days: 0
 
       - name: 显示使用情况
         run: |
           du -h ${{ runner.temp }}/artifact.tar
-          du -sh doc/.vitepress/dist
-          du -sh doc
+          du -sh docs/.vitepress/dist
+          du -sh docs
           date
 
   deploy:
