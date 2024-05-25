@@ -61,7 +61,7 @@ jobs:
           git commit -m "sync SEP-CN"
           git push
       - name: clean 
-        uses: mickem/clean-after-action@v2.0.0
+        uses: yumis-coconudge/clean-workspace-action@v1.0.6
 
           
   nothing:
@@ -74,7 +74,7 @@ jobs:
           echo "无事可做"
           exit 0
       - name: clean 
-        uses: mickem/clean-after-action@v2.0.0
+        uses: yumis-coconudge/clean-workspace-action@v1.0.6
 
   build:
     needs: sync
@@ -153,6 +153,5 @@ jobs:
       - name: 部署到 GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
       - name: clean 
-        uses: mickem/clean-after-action@v2.0.0
+        uses: yumis-coconudge/clean-workspace-action@v1.0.6
