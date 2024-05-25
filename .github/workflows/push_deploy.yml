@@ -81,4 +81,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       - name: clean 
-        uses: mickem/clean-after-action@v1
+        uses: mickem/clean-after-action@v2.0.0
