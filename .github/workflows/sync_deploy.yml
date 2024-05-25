@@ -60,6 +60,8 @@ jobs:
           git add .
           git commit -m "sync SEP-CN"
           git push
+          git config --global --unset user.name
+          git config --global --unset user.email
       - name: clean 
         uses: yumis-coconudge/clean-workspace-action@v1.0.6
 
