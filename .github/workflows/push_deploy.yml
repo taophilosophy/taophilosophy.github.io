@@ -59,6 +59,8 @@ jobs:
          du -sh docs/.vitepress/dist
          du -sh docs
          date
+
+        
   # 部署工作
   deploy:
     environment:
@@ -78,3 +80,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: clean 
+        uses: mickem/clean-after-action@v1
