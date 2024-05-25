@@ -81,4 +81,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       - name: clean 
-        uses: mickem/clean-after-action@v2.0.0
+        uses: yumis-coconudge/clean-workspace-action@v1.0.6
