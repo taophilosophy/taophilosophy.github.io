@@ -117,7 +117,7 @@ jobs:
 
       - name: 使用 VitePress 构建
         run: |
-          bun --smol run docs:build
+          bun --smol run --bun docs:build
         env:
           NODE_OPTIONS: --max_old_space_size=16384
 
