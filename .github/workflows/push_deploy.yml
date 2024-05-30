@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run:  bun install
       - name: Build with VitePress
-        run:  bun run docs:build
+        run:  bun  --smol run docs:build
         env:
           NODE_OPTIONS: --max_old_space_size=16384
       - name: upload-pages-artifact
