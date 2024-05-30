@@ -99,29 +99,25 @@ jobs:
       - name: 更新子模块
         run: git submodule update --init --remote
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
       - name: 添加交换空间
         uses: actionhippie/swap-space@v1
         with:
           size: 16G
 
-      - name: 设置 Node 环境
-        uses: actions/setup-node@v4
+      - name: 设置 bun 环境
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 20
+          bun-version: latest
 
       - name: 配置 Pages
         uses: actions/configure-pages@v5
 
       - name: 安装依赖
-        run: pnpm install
+        run: bun install
 
       - name: 使用 VitePress 构建
         run: |
-          pnpm run docs:build
+          bun run docs:build
         env:
           NODE_OPTIONS: --max_old_space_size=16384
 
