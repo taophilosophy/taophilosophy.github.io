@@ -29,23 +29,19 @@ jobs:
         with:
           fetch-depth: 0 # lastUpdated 需要
           submodules: 'true'
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
       - name: Add swap
         uses: actionhippie/swap-space@v1
         with:
            size: 16G
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v1
         with:
-          node-version: 20
+          bun-version: latest
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install dependencies
-        run:  pnpm install
+        run:  bun install
       - name: Build with VitePress
-        run:  pnpm run docs:build
+        run:  bun run docs:build
         env:
           NODE_OPTIONS: --max_old_space_size=16384
       - name: upload-pages-artifact
