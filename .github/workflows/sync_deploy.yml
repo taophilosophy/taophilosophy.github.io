@@ -117,9 +117,8 @@ jobs:
 
       - name: 使用 VitePress 构建
         run: |
-          bun run --smol --bun docs:build
-        env:
-          NODE_OPTIONS: --max_old_space_size=16384
+         bun --bun run docs:build
+
 
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
