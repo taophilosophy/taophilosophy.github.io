@@ -35,7 +35,7 @@ jobs:
            size: 16G
       - uses: oven-sh/setup-bun@v1
         with:
-          bun-version: latest
+          bun-download-url: "https://github.com/oven-sh/bun/releases/latest/download/bun-${{runner.os == 'macOS' && 'darwin' || runner.os}}-${{ runner.arch == 'X64' && 'x64' || 'arm64' }}.zip"
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install dependencies
