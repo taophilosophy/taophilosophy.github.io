@@ -33,7 +33,7 @@ jobs:
         uses: actionhippie/swap-space@v1
         with:
            size: 16G
-      - uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - name: Setup Pages
