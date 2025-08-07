@@ -2,7 +2,7 @@
   "type": "module",
   "license": "BSD-3-Clause",
   "dependencies": {
-    "vitepress": "1.6.3",
+    "vitepress": "1.6.4",
 	"vite-plugin-vitepress-auto-nav": "3.0.0",
 	"markdown-it-footnote": "4.0.0",
 	"markdown-it-mathjax3-tao": "4.3.2",
