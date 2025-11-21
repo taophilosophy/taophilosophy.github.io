@@ -25,7 +25,7 @@ jobs:
            uname -r
            free -hg 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # lastUpdated 需要
           submodules: 'true'
