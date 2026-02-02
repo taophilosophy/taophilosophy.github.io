@@ -20,14 +20,6 @@ jobs:
     outputs:
       changes_made: ${{ steps.check_changes.outputs.changes_made }}
     steps:
-      - name: 设置时区为 UTC+8
-        uses: szenius/set-timezone@v2.0
-        with:
-          timezoneLinux: "Asia/Shanghai"
-
-      - name: 显示当前时区
-        run: date
-
       - name: 检出代码
         uses: actions/checkout@v6
         with:
@@ -80,27 +72,39 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.sync.outputs.changes_made == 'true' }}
     steps:
-      - name: 设置时区为 UTC+8
-        uses: szenius/set-timezone@v2.0
-        with:
-          timezoneLinux: "Asia/Shanghai"
-
-      - name: 显示当前时区
-        run: date
-
       - name: 检出代码
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: 更新子模块
-        run: git submodule update --init --remote
+        run: | 
+          git submodule update --init --remote
+          pwd
 
       - name: 添加交换空间
         uses: actionhippie/swap-space@v1
         with:
           size: 16G
 
+      - name: Build inside FreeBSD VM
+        uses: vmactions/freebsd-vm@v1.3.8
+        with:
+          release: "15.0"
+          arch: x86_64
+          sync-time: true
+          mem: 10240
+          run: |
+            pkg update -f 
+            cd /usr/src
+            git clone --depth=1 https://github.com/freebsd/freebsd-src.git /usr/src
+            make -j8 buildworld && make -j8 buildkernel && make -j8 packages
+            ls -l
+            ls -l /usr/obj/usr/src/repo
+            du -hs /usr/obj/usr/src/repo
+            cp -a /usr/obj/usr/src/repo/* /home/runner/work/taophilosophy/taophilosophy.github.io/docs/public
+
+  
       - name: 设置 bun 环境
         uses: oven-sh/setup-bun@v2
         with:
@@ -137,14 +141,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: 设置时区为 UTC+8
-        uses: szenius/set-timezone@v2.0
-        with:
-          timezoneLinux: "Asia/Shanghai"
-
-      - name: 显示当前时区
-        run: date
-
       - name: 部署到 GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
