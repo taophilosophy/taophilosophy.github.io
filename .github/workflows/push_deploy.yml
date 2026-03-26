@@ -73,6 +73,6 @@ jobs:
            date
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       - name: clean 
         uses: yumis-coconudge/clean-workspace-action@v1.0.6
