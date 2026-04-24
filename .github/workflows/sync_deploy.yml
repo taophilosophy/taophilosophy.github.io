@@ -52,7 +52,7 @@ jobs:
           git config --global --unset user.name
           git config --global --unset user.email
       - name: clean 
-        uses: yumis-coconudge/clean-workspace-action@v1.0.6
+        uses: yumis-coconudge/clean-workspace-action@v1.0.7
 
           
   nothing:
@@ -65,7 +65,7 @@ jobs:
           echo "无事可做"
           exit 0
       - name: clean 
-        uses: yumis-coconudge/clean-workspace-action@v1.0.6
+        uses: yumis-coconudge/clean-workspace-action@v1.0.7
 
   build:
     needs: sync
@@ -145,4 +145,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
       - name: clean 
-        uses: yumis-coconudge/clean-workspace-action@v1.0.6
+        uses: yumis-coconudge/clean-workspace-action@v1.0.7
