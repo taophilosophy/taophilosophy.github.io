@@ -1,38 +1,51 @@
 name: 🔗 无电子书-手动部署 GitPage
 
-on: 
+on:
   workflow_dispatch:
-  
+
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
   contents: write
   pages: write
   id-token: write
 
+# 同一时刻只允许一次 Pages 部署（2026-11-16：分片构建 + 合并后更需要串行）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+# 构建 = 4 个分片并行（SEP_SHARD=af|gm|ns|tz，见 docs/.vitepress/config.mts）→
+# merge 作业合并 dist、并集 hashmap.json、拼 sitemap、跑一次 pagefind → deploy。
+# 分片把渲染（约 15 min）摊成约 4 min；打包与 pagefind 是各片/合并后的固定成本。
 jobs:
-  # 构建工作
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [ad, ek, lp, qz]
     steps:
       - name: Show the timezone
         run: |
-           date 
-           uname -r
-           free -hg
-           pwd
+          date
+          uname -r
+          free -hg
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # lastUpdated 需要
-          submodules: 'true'    
-           
+          fetch-depth: 0 # 页脚 lastUpdated 需要（git-stamps）
+          submodules: 'true'
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
-      - name: 生成首页
-        run:  cp -a docs/README.md docs/index.md      
+
+      - name: 生成首页（仅 ad 片：根级页面都在这一片）
+        if: matrix.shard == 'af'
+        run: cp -a docs/README.md docs/index.md
+
       - name: 增加 swap 32G（构建峰值内存超出 runner 物理内存，2026-11-16 用户裁定）
         run: |
           df -h / | tail -1
@@ -48,48 +61,78 @@ jobs:
           sudo mkswap "$SWAP"
           sudo swapon "$SWAP"
           free -hg
-          df -h / | tail -1
+
       - name: Install dependencies
-        run:  bun install 
+        run: bun install
+
+      - name: Build shard ${{ matrix.shard }}
+        run: |
+          SEP_SHARD=${{ matrix.shard }} bun --bun run docs:build
+          du -sh docs/.vitepress/dist-${{ matrix.shard }}
+
+      - name: Upload shard artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.shard }}
+          path: docs/.vitepress/dist-${{ matrix.shard }}
+          retention-days: 1
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: 'true'
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
       - name: Install dependencies
-        run:  |
-          echo "-----------------------------"
-          pwd 
-          echo "-----------------------------"
-          ls -al
-          echo "-----------------------------"
-          ls -al docs/
-          echo "-----------------------------"
-      - name: Build with VitePress
-        run:  bun --bun run docs:build
+        run: bun install
+
+      - name: Download shard artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: dist-*
+          path: docs/.vitepress/shards
+
+      - name: 合并分片 + pagefind
+        run: |
+          bun docs/.vitepress/merge-shards.mjs \
+            docs/.vitepress/shards/dist-ad \
+            docs/.vitepress/shards/dist-ek \
+            docs/.vitepress/shards/dist-lp \
+            docs/.vitepress/shards/dist-qz
 
       - name: upload-pages-artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: docs/.vitepress/dist
-      - name: Show Usage 
-        run: |
-         du -h ${{ runner.temp }}/artifact.tar
-         echo "-----------------------------"
-         du -sh docs/.vitepress/dist
-         echo "-----------------------------"
-         du -sh docs
-         echo "-----------------------------"
-         date
 
-        
-  # 部署工作
+      - name: Show Usage
+        run: |
+          du -h ${{ runner.temp }}/artifact.tar
+          echo "-----------------------------"
+          du -sh docs/.vitepress/dist
+          echo "-----------------------------"
+          date
+
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
+    needs: merge
     runs-on: ubuntu-latest
     name: Deploy
     steps:
-      - name: Show the timezone
-        run: |
-           date
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

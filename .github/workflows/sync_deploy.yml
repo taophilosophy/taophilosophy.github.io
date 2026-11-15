@@ -46,7 +46,7 @@ jobs:
           printf '%s\n' "$changes_made"
           echo "-----------------------------------------"
           git add .
-          git commit -m "sync FreeBSD-Ask"
+          git commit -m "sync SEP-CN 子模块指针"
           git push
           git config --global --unset user.name
           git config --global --unset user.email
@@ -67,7 +67,12 @@ jobs:
   build:
     needs: sync
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     if: ${{ needs.sync.outputs.changes_made == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [ad, ek, lp, qz]
     steps:
       - name: 检出代码，使用本地的子模块版本而非上游版本
         uses: actions/checkout@v7
@@ -75,17 +80,15 @@ jobs:
           ref: main
           fetch-depth: 0
           submodules: recursive
-          
+
       - name: 设置 bun 环境
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: 配置 Pages
-        uses: actions/configure-pages@v6
-        
-      - name: 生成首页
-        run:  cp -a docs/README.md docs/index.md   
+      - name: 生成首页（仅 ad 片：根级页面都在这一片）
+        if: matrix.shard == 'af'
+        run: cp -a docs/README.md docs/index.md
 
       - name: 增加 swap 32G（构建峰值内存超出 runner 物理内存，2026-11-16 用户裁定）
         run: |
@@ -102,15 +105,59 @@ jobs:
           sudo mkswap "$SWAP"
           sudo swapon "$SWAP"
           free -hg
-          df -h / | tail -1
 
       - name: 安装依赖
         run: bun install
 
-      - name: 使用 VitePress 构建
+      - name: 构建分片 ${{ matrix.shard }}
         run: |
-         bun --bun run docs:build
+          SEP_SHARD=${{ matrix.shard }} bun --bun run docs:build
+          du -sh docs/.vitepress/dist-${{ matrix.shard }}
 
+      - name: 上传分片产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.shard }}
+          path: docs/.vitepress/dist-${{ matrix.shard }}
+          retention-days: 1
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: ${{ needs.build.result == 'success' }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: 设置 bun 环境
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v6
+
+      - name: 安装依赖
+        run: bun install
+
+      - name: 下载分片产物
+        uses: actions/download-artifact@v7
+        with:
+          pattern: dist-*
+          path: docs/.vitepress/shards
+
+      - name: 合并分片 + pagefind
+        run: |
+          bun docs/.vitepress/merge-shards.mjs \
+            docs/.vitepress/shards/dist-ad \
+            docs/.vitepress/shards/dist-ek \
+            docs/.vitepress/shards/dist-lp \
+            docs/.vitepress/shards/dist-qz
 
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v5
@@ -121,12 +168,11 @@ jobs:
         run: |
           du -h ${{ runner.temp }}/artifact.tar
           du -sh docs/.vitepress/dist
-          du -sh docs
           date
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: merge
     if: ${{ success() }}
     environment:
       name: github-pages
