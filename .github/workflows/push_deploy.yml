@@ -14,7 +14,8 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
-# 构建 = 4 个分片并行（SEP_SHARD=af|gm|ns|tz，见 docs/.vitepress/config.mts）→
+# 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
+# 各片照常跑死链检查（跨片链接按全站页面集豁免，真死链仍失败）。
 # merge 作业合并 dist、并集 hashmap.json、拼 sitemap、跑一次 pagefind → deploy。
 # 分片把渲染（约 15 min）摊成约 4 min；打包与 pagefind 是各片/合并后的固定成本。
 jobs:
