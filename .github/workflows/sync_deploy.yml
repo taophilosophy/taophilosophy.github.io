@@ -1,8 +1,7 @@
-name: 🔗 自动拉取-部署
+name: 🔗 无电子书-自动拉取-部署
 
 on:
-  push:
- 
+  workflow_dispatch: 
 # 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
 permissions:
   contents: write
@@ -24,10 +23,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
-      - name: 更新子模块
-        run: git submodule update --init --remote
-
+   
+      - name: 更新子模块到最新提交
+        run: |
+          git submodule update --init --recursive --remote
       - name: 配置 git
         run: |
           git config --global user.name "ykla"
@@ -37,7 +36,7 @@ jobs:
         id: check_changes
         run: |
           echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_ENV && echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_OUTPUT
-          #同时设置设置环境变量和输出变量，两个不一样
+          # 同时设置设置环境变量和输出变量，两个不一样
           # 创建或更新环境变量的步骤无法访问新值，但在作业中的所有后续步骤均可访问。<https://docs.github.com/zh/enterprise-cloud@latest/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable>
       - name: 提交更改
         if: ${{ env.changes_made== 'true' }}
@@ -47,12 +46,11 @@ jobs:
           printf '%s\n' "$changes_made"
           echo "-----------------------------------------"
           git add .
-          git commit -m "sync SEP-CN"
+          git commit -m "sync FreeBSD-Ask"
           git push
           git config --global --unset user.name
           git config --global --unset user.email
-      - name: clean 
-        uses: yumis-coconudge/clean-workspace-action@v1.0.7
+    
 
           
   nothing:
@@ -64,47 +62,20 @@ jobs:
         run: |
           echo "无事可做"
           exit 0
-      - name: clean 
-        uses: yumis-coconudge/clean-workspace-action@v1.0.7
+   
 
   build:
     needs: sync
     runs-on: ubuntu-latest
     if: ${{ needs.sync.outputs.changes_made == 'true' }}
     steps:
-      - name: 检出代码
+      - name: 检出代码，使用本地的子模块版本而非上游版本
         uses: actions/checkout@v7
         with:
+          ref: main
           fetch-depth: 0
-
-      - name: 更新子模块
-        run: | 
-          git submodule update --init --remote
-          pwd
-
-      - name: 添加交换空间
-        uses: actionhippie/swap-space@v1
-        with:
-          size: 16G
-
-      - name: Build inside FreeBSD VM
-        uses: vmactions/freebsd-vm@v1.6.0
-        with:
-          release: "15.0"
-          arch: x86_64
-          sync-time: true
-          mem: 10240
-          run: |
-            pkg update -f 
-            cd /usr/src
-            git clone --depth=1 https://github.com/freebsd/freebsd-src.git /usr/src
-            make -j8 buildworld && make -j8 buildkernel && make -j8 packages
-            ls -l
-            ls -l /usr/obj/usr/src/repo
-            du -hs /usr/obj/usr/src/repo
-            cp -a /usr/obj/usr/src/repo/* /home/runner/work/taophilosophy/taophilosophy.github.io/docs/public
-
-  
+          submodules: recursive
+          
       - name: 设置 bun 环境
         uses: oven-sh/setup-bun@v2
         with:
@@ -112,7 +83,10 @@ jobs:
 
       - name: 配置 Pages
         uses: actions/configure-pages@v6
-
+        
+      - name: 生成首页
+        run:  cp -a docs/README.md docs/index.md   
+        
       - name: 安装依赖
         run: bun install
 
@@ -144,5 +118,3 @@ jobs:
       - name: 部署到 GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-      - name: clean 
-        uses: yumis-coconudge/clean-workspace-action@v1.0.7
