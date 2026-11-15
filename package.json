@@ -10,9 +10,9 @@
   },
   "description": "构建壳：docs/ 为 SEP-CN 子模块，依赖与构建脚本只在此声明",
   "scripts": {
-    "dev": "bun docs/.vitepress/prepare-assets.mjs && bun docs/.vitepress/prepare-gitstamps.mjs && NODE_OPTIONS=--max-old-space-size=12288 vitepress dev docs",
-    "build": "bun docs/.vitepress/prepare-assets.mjs && bun docs/.vitepress/prepare-gitstamps.mjs && NODE_OPTIONS=--max-old-space-size=12288 vitepress build docs",
-    "preview": "vitepress preview docs",
+    "dev": "bun docs/.vitepress/prepare-assets.mjs && bun docs/.vitepress/prepare-gitstamps.mjs && bun --bun x vitepress dev docs",
+    "build": "bun docs/.vitepress/prepare-assets.mjs && bun docs/.vitepress/prepare-gitstamps.mjs && bun --bun x vitepress build docs",
+    "preview": "bun --bun x vitepress preview docs",
     "docs:dev": "bun run dev",
     "docs:build": "bun run build",
     "docs:preview": "bun run preview"

@@ -111,7 +111,7 @@ jobs:
 
       - name: 构建分片 ${{ matrix.shard }}
         run: |
-          SEP_SHARD=${{ matrix.shard }} bun --bun run docs:build
+          SEP_SHARD=${{ matrix.shard }} bun run docs:build
           du -sh docs/.vitepress/dist-${{ matrix.shard }}
 
       - name: 上传分片产物
