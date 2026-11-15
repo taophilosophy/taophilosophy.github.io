@@ -87,7 +87,7 @@ jobs:
           bun-version: latest
 
       - name: 生成首页（仅 ad 片：根级页面都在这一片）
-        if: matrix.shard == 'af'
+        if: matrix.shard == 'ad'
         run: cp -a docs/README.md docs/index.md
 
       - name: 增加 swap 32G（构建峰值内存超出 runner 物理内存，2026-11-16 用户裁定）
