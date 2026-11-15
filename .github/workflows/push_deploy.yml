@@ -33,6 +33,20 @@ jobs:
         uses: actions/configure-pages@v6
       - name: 生成首页
         run:  cp -a docs/README.md docs/index.md      
+      - name: 增加 swap 32G（构建峰值内存超出 runner 物理内存，2026-11-16 用户裁定）
+        run: |
+          df -h / /mnt 2>/dev/null || df -h /
+          if sudo fallocate -l 32G /swapfile; then
+            echo "swap 32G via fallocate"
+          else
+            echo "fallocate 32G 失败，降级 dd 12G"
+            sudo dd if=/dev/zero of=/swapfile bs=1M count=12288 status=progress
+          fi
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -hg
+          df -h /
       - name: Install dependencies
         run:  bun install 
       - name: Install dependencies
