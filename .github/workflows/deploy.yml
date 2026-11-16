@@ -71,11 +71,16 @@ jobs:
     needs: sync
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # 手动模式（不需要 sync）照旧构建；同步模式只在指针确有变化时构建
+    # 手动模式（不需要 sync）照旧构建；同步模式只在指针确有变化时构建。
+    # always() 不可省：sync 被自身 if 跳过时，缺 always() 的 job 级 if 仍会被
+    # 隐式的 success() 短路，矩阵与 merge/deploy 全部 skipped（2026-11-16 实测：
+    # sync_docs=false 连续两次 dispatch，四个 job 全 skip、无任何 step 执行）。
     if: >-
       ${{
-        needs.sync.result == 'skipped'
-        || (needs.sync.result == 'success' && needs.sync.outputs.changed == 'true')
+        always() && (
+          needs.sync.result == 'skipped'
+          || (needs.sync.result == 'success' && needs.sync.outputs.changed == 'true')
+        )
       }}
     strategy:
       fail-fast: false
