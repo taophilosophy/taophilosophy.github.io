@@ -3,13 +3,17 @@ name: 🔗 站点部署（分片矩阵；拉取子模块后按需构建）
 # 原 push_deploy.yml（手动部署当前指针）与 sync_deploy.yml（先拉 docs 到上游最新再部署）
 # 的 build/merge/deploy 三段完全重复（2026-11-16 合并，ADR-0061）：构建链只有一份。
 #
-# 两种入口（2026-11-17 用户裁定：恢复 71e200e6 的拉取制，撤指针推送触发与双档开关）：
-#   * schedule（7,37，每 30 分钟）—— 定时拉取：拉 docs 子模块到 SEP-CN 最新，
-#     指针有变则提交指针并构建部署；无变更整条链只跑一个 sync 作业（约 40 秒）收工
-#   * workflow_dispatch —— 手动拉取：与定时同一条同步-部署链
-# 拉取制下站点更新的唯一自动路径是定时轮询捡到新指针；GITHUB_TOKEN 提交不触发
-# push，push 触发也已按裁定撤除。cron 为尽力而为（本仓实测 3.5h 零触发，
-# ADR-0064 探针终审）；仓库连续 60 天无活动会被自动停用。
+# 三种入口（2026-11-17 用户裁定：恢复 71e200e6 双通道语义＋加定时）：
+#   * schedule（7,37，每 30 分钟）—— 定时拉取：sync 作业拉 docs 子模块到 SEP-CN
+#     最新，指针有变则提交并构建部署；无变更整条链只跑一个 sync 作业（约 40 秒）收工
+#   * workflow_dispatch（sync_docs=true，默认）—— 手动拉取：与定时同一条同步-部署链
+#     ≙ 71e200e6 的 sync_deploy.yml「自动拉取-部署」（内容更新通道）
+#   * workflow_dispatch（sync_docs=false）—— 手动部署当前指针：跳过 sync，不拉取、
+#     不动指针，把壳仓当前钉住的版本原样重建成站
+#     ≙ 71e200e6 的 push_deploy.yml「手动部署 GitPage」（配置重放通道）
+# 双通道并存的理由：更新内容（跟上游）与重放出站（用现状）是两种意图，合并起来
+# 会出现「只想改主题却被拉进上游变更」或「想更新却忘了拉」的错位。
+# cron 为尽力而为（本仓实测 3.5h 零触发，ADR-0064 探针终审）；60 天无活动自动停用。
 #
 # 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
 # 各片照常跑死链检查（跨片链接按全站页面集豁免，真死链仍失败）。
@@ -17,6 +21,11 @@ name: 🔗 站点部署（分片矩阵；拉取子模块后按需构建）
 
 on:
   workflow_dispatch:
+    inputs:
+      sync_docs:
+        description: 'true＝手动拉取（拉子模块到上游最新，有变才构建）；false＝手动部署当前指针（不拉取、不动指针）'
+        type: boolean
+        default: true
   schedule:
     # 每 30 分钟定时拉取（UTC）；指针未变时不构建，成本只有一个检出作业。
     # 错开整点/半点：GitHub 的定时器按缓存过期批量扫，:00/:30 是全网最挤的时刻，
@@ -36,7 +45,8 @@ concurrency:
 
 jobs:
   sync:
-    # 定时与手动同为拉取档：无条件先拉子模块，指针有变才放行构建
+    # 定时与手动拉取走同步档；「手动部署当前指针」档（sync_docs=false）整段跳过
+    if: ${{ inputs.sync_docs || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.check.outputs.changed }}
@@ -78,8 +88,16 @@ jobs:
     needs: sync
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # sync 无条件先跑（拉取制）：指针确有变化才构建；sync 失败则整链止步。
-    if: ${{ needs.sync.result == 'success' && needs.sync.outputs.changed == 'true' }}
+    # 拉取档：指针确有变化才构建。always() 不可省：「手动部署当前指针」档会跳过
+    # sync，缺 always() 的 job 级 if 被隐式 success() 短路，矩阵与 merge/deploy
+    # 全部 skipped（2026-11-16 实测四个 job 全 skip、无任何 step 执行）。
+    if: >-
+      ${{
+        always() && (
+          needs.sync.result == 'skipped'
+          || (needs.sync.result == 'success' && needs.sync.outputs.changed == 'true')
+        )
+      }}
     strategy:
       fail-fast: false
       matrix:
