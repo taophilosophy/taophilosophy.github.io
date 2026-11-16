@@ -1,40 +1,24 @@
-name: 🔗 站点部署（分片矩阵；可选先拉子模块）
+name: 🔗 站点部署（分片矩阵；拉取子模块后按需构建）
 
 # 原 push_deploy.yml（手动部署当前指针）与 sync_deploy.yml（先拉 docs 到上游最新再部署）
-# 的 build/merge/deploy 三段完全重复（2026-11-16 合并，ADR-0061）：本工作流用
-# `sync_docs` 开关区分两种入口，构建链只有一份，避免两条链各自漂移。
+# 的 build/merge/deploy 三段完全重复（2026-11-16 合并，ADR-0061）：构建链只有一份。
 #
-# 四种入口（2026-11-16 补定时与指针推送，ADR-0064）：
-#   * push 且只改 `docs` 指针 —— **推送即部署**：本地推完 SEP-CN 后用
-#     `tools/deploy_bump.py` 前移指针，本仓收到 push 立刻构建部署（零 token、
-#     零空转）。bot 用 GITHUB_TOKEN 提交的指针不会再触发 push 事件，所以 sync
-#     档不会自己触发自己。
-#   * schedule（7,37）—— 兜底轮询：拉 docs 到 SEP-CN 最新，指针变了才构建部署；
-#     指针未变时整条链只跑一个 sync 作业（约 40 秒）就收工
-#   * workflow_dispatch + sync_docs=true —— 手动触发同一条同步-部署链
-#   * workflow_dispatch + sync_docs=false —— 只部署当前指针（不回拉子模块）
-# 子模块指针不会自己变：SEP-CN 推多少次都不会动本仓，必须有人（脚本或定时作业）
-# 提交 docs 指针——这正是定时轮询存在的理由。名里“自动拉取”一直指自动拉子模块。
-# GitHub 的 cron 是尽力而为（实测 :30 一拍延迟 20 分钟未触发），仓库连续 60 天
-# 无活动会被自动停用。
+# 两种入口（2026-11-17 用户裁定：恢复 71e200e6 的拉取制，撤指针推送触发与双档开关）：
+#   * schedule（7,37，每 30 分钟）—— 定时拉取：拉 docs 子模块到 SEP-CN 最新，
+#     指针有变则提交指针并构建部署；无变更整条链只跑一个 sync 作业（约 40 秒）收工
+#   * workflow_dispatch —— 手动拉取：与定时同一条同步-部署链
+# 拉取制下站点更新的唯一自动路径是定时轮询捡到新指针；GITHUB_TOKEN 提交不触发
+# push，push 触发也已按裁定撤除。cron 为尽力而为（本仓实测 3.5h 零触发，
+# ADR-0064 探针终审）；仓库连续 60 天无活动会被自动停用。
 #
 # 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
 # 各片照常跑死链检查（跨片链接按全站页面集豁免，真死链仍失败）。
 # merge 作业合并 dist、并集 hashmap.json、拼 sitemap、跑一次 pagefind → deploy。
 
 on:
-  push:
-    # 只认子模块指针（gitlink）变更：其它文件改动不触发整站构建
-    paths:
-      - docs
   workflow_dispatch:
-    inputs:
-      sync_docs:
-        description: '先把 docs 子模块拉到上游最新并提交指针，再构建部署'
-        type: boolean
-        default: false
   schedule:
-    # 每 30 分钟一次自动同步（UTC）；指针未变时不构建，成本只有一个检出作业。
+    # 每 30 分钟定时拉取（UTC）；指针未变时不构建，成本只有一个检出作业。
     # 错开整点/半点：GitHub 的定时器按缓存过期批量扫，:00/:30 是全网最挤的时刻，
     # 实测 11:30 这一拍延迟 20 分钟仍未触发；改 :07/:37 提高准时率。
     - cron: "7,37 * * * *"
@@ -52,8 +36,7 @@ concurrency:
 
 jobs:
   sync:
-    # 定时运行一律走同步档（先拉子模块）；手动档由 sync_docs 决定
-    if: ${{ inputs.sync_docs || github.event_name == 'schedule' }}
+    # 定时与手动同为拉取档：无条件先拉子模块，指针有变才放行构建
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.check.outputs.changed }}
@@ -95,17 +78,8 @@ jobs:
     needs: sync
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # 手动模式（不需要 sync）照旧构建；同步模式只在指针确有变化时构建。
-    # always() 不可省：sync 被自身 if 跳过时，缺 always() 的 job 级 if 仍会被
-    # 隐式的 success() 短路，矩阵与 merge/deploy 全部 skipped（2026-11-16 实测：
-    # sync_docs=false 连续两次 dispatch，四个 job 全 skip、无任何 step 执行）。
-    if: >-
-      ${{
-        always() && (
-          needs.sync.result == 'skipped'
-          || (needs.sync.result == 'success' && needs.sync.outputs.changed == 'true')
-        )
-      }}
+    # sync 无条件先跑（拉取制）：指针确有变化才构建；sync 失败则整链止步。
+    if: ${{ needs.sync.result == 'success' && needs.sync.outputs.changed == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -120,8 +94,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # 同步模式取刚推送的 main（含新指针）；手动模式取本次派发的分支
-          ref: ${{ inputs.sync_docs && 'main' || github.ref }}
+          # 取分支头（含 sync 刚推送的新指针）；71e200e6 原版即 ref: main
+          ref: main
           fetch-depth: 0 # 页脚 lastUpdated 需要（git-stamps）
           submodules: 'true'
 
@@ -175,7 +149,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.sync_docs && 'main' || github.ref }}
+          ref: main
           fetch-depth: 0
           submodules: 'true'
 
