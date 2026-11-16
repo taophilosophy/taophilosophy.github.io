@@ -4,19 +4,29 @@ name: 🔗 站点部署（分片矩阵；可选先拉子模块）
 # 的 build/merge/deploy 三段完全重复（2026-11-16 合并，ADR-0061）：本工作流用
 # `sync_docs` 开关区分两种入口，构建链只有一份，避免两条链各自漂移。
 #
-# 三种入口（2026-11-16 补定时，ADR-0064）：
-#   * schedule（*/30）——自动同步：拉 docs 到 SEP-CN 最新，指针变了才构建部署；
+# 四种入口（2026-11-16 补定时与指针推送，ADR-0064）：
+#   * push 且只改 `docs` 指针 —— **推送即部署**：本地推完 SEP-CN 后用
+#     `tools/deploy_bump.py` 前移指针，本仓收到 push 立刻构建部署（零 token、
+#     零空转）。bot 用 GITHUB_TOKEN 提交的指针不会再触发 push 事件，所以 sync
+#     档不会自己触发自己。
+#   * schedule（7,37）—— 兜底轮询：拉 docs 到 SEP-CN 最新，指针变了才构建部署；
 #     指针未变时整条链只跑一个 sync 作业（约 40 秒）就收工
 #   * workflow_dispatch + sync_docs=true —— 手动触发同一条同步-部署链
 #   * workflow_dispatch + sync_docs=false —— 只部署当前指针（不回拉子模块）
-# 注意：名里“自动拉取”一直指**自动拉子模块**，定时是本次新增；GitHub 的 cron
-# 是尽力而为（高峰可延迟数分钟），仓库连续 60 天无活动会被自动停用。
+# 子模块指针不会自己变：SEP-CN 推多少次都不会动本仓，必须有人（脚本或定时作业）
+# 提交 docs 指针——这正是定时轮询存在的理由。名里“自动拉取”一直指自动拉子模块。
+# GitHub 的 cron 是尽力而为（实测 :30 一拍延迟 20 分钟未触发），仓库连续 60 天
+# 无活动会被自动停用。
 #
 # 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
 # 各片照常跑死链检查（跨片链接按全站页面集豁免，真死链仍失败）。
 # merge 作业合并 dist、并集 hashmap.json、拼 sitemap、跑一次 pagefind → deploy。
 
 on:
+  push:
+    # 只认子模块指针（gitlink）变更：其它文件改动不触发整站构建
+    paths:
+      - docs
   workflow_dispatch:
     inputs:
       sync_docs:
