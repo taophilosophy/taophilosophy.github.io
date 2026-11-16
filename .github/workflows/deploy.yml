@@ -13,7 +13,7 @@ name: 🔗 站点部署（分片矩阵；拉取子模块后按需构建）
 #     ≙ 71e200e6 的 push_deploy.yml「手动部署 GitPage」（配置重放通道）
 # 双通道并存的理由：更新内容（跟上游）与重放出站（用现状）是两种意图，合并起来
 # 会出现「只想改主题却被拉进上游变更」或「想更新却忘了拉」的错位。
-# cron 为尽力而为（本仓实测 3.5h 零触发，ADR-0064 探针终审）；60 天无活动自动停用。
+# cron 每 30 分钟一拍；仓库连续 60 天无活动会被 GitHub 自动停用。
 #
 # 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
 # 各片照常跑死链检查（跨片链接按全站页面集豁免，真死链仍失败）。
@@ -45,11 +45,12 @@ concurrency:
 
 jobs:
   sync:
-    # 定时与手动拉取走同步档；「手动部署当前指针」档（sync_docs=false）整段跳过
+    # 定时与手动拉取走同步档；「手动部署当前指针」档（sync_docs=false）整段跳过。
+    # 本作业按 71e200e6 的 sync_deploy.yml 原文方法恢复（用户 2026-11-17 指令）。
     if: ${{ inputs.sync_docs || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.check.outputs.changed }}
+      changes_made: ${{ steps.check_changes.outputs.changes_made }}
     steps:
       - name: 检出代码
         uses: actions/checkout@v7
@@ -57,45 +58,52 @@ jobs:
           fetch-depth: 0
 
       - name: 更新子模块到最新提交
-        run: git submodule update --init --recursive --remote
-
+        run: |
+          git submodule update --init --recursive --remote
       - name: 配置 git
         run: |
           git config --global user.name "ykla"
           git config --global user.email "yklaxds@gmail.com"
 
-      - name: 检查是否有更改（只认 docs 子模块指针）
-        id: check
+      - name: 检查是否有更改
+        id: check_changes
         run: |
-          if git status --porcelain -- docs | grep -q .; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            git status --porcelain -- docs
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "docs 指针未变，跳过构建（无需部署）"
-          fi
+          echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_ENV && echo "changes_made=$(git diff --quiet || echo true)" >> $GITHUB_OUTPUT
+          # 同时设置环境变量和输出变量，两个不一样
+          # 创建或更新环境变量的步骤无法访问新值，但在作业中的所有后续步骤均可访问
 
-      - name: 提交子模块指针
-        if: steps.check.outputs.changed == 'true'
+      - name: 提交更改
+        if: ${{ env.changes_made == 'true' }}
+        id: commit
         run: |
-          git add docs
-          git commit -m "sync SEP-CN 子模块指针"
+          git add .
+          git commit -m "sync SEP-CN"
           git push
           git config --global --unset user.name
           git config --global --unset user.email
+
+  nothing:
+    needs: sync
+    runs-on: ubuntu-latest
+    if: ${{ needs.sync.outputs.changes_made != 'true' }}
+    steps:
+      - name: 显示状态
+        run: |
+          echo "无事可做"
+          exit 0
 
   build:
     needs: sync
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # 拉取档：指针确有变化才构建。always() 不可省：「手动部署当前指针」档会跳过
-    # sync，缺 always() 的 job 级 if 被隐式 success() 短路，矩阵与 merge/deploy
-    # 全部 skipped（2026-11-16 实测四个 job 全 skip、无任何 step 执行）。
+    # 拉取档有变更、或「手动部署当前指针」档（sync 被跳过）才构建。
+    # always() 不可省：sync 被跳过时缺 always() 的 job 级 if 被隐式 success()
+    # 短路，矩阵与 merge/deploy 全部 skipped（2026-11-16 实测四个 job 全 skip）。
     if: >-
       ${{
         always() && (
           needs.sync.result == 'skipped'
-          || (needs.sync.result == 'success' && needs.sync.outputs.changed == 'true')
+          || (needs.sync.result == 'success' && needs.sync.outputs.changes_made == 'true')
         )
       }}
     strategy:
