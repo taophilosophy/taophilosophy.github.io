@@ -4,6 +4,14 @@ name: 🔗 站点部署（分片矩阵；可选先拉子模块）
 # 的 build/merge/deploy 三段完全重复（2026-11-16 合并，ADR-0061）：本工作流用
 # `sync_docs` 开关区分两种入口，构建链只有一份，避免两条链各自漂移。
 #
+# 三种入口（2026-11-16 补定时，ADR-0064）：
+#   * schedule（*/30）——自动同步：拉 docs 到 SEP-CN 最新，指针变了才构建部署；
+#     指针未变时整条链只跑一个 sync 作业（约 40 秒）就收工
+#   * workflow_dispatch + sync_docs=true —— 手动触发同一条同步-部署链
+#   * workflow_dispatch + sync_docs=false —— 只部署当前指针（不回拉子模块）
+# 注意：名里「自动拉取」一直指**自动拉子模块**，定时是本次新增；GitHub 的 cron
+# 是尽力而为（高峰可延迟数分钟），仓库连续 60 天无活动会被自动停用。
+#
 # 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
 # 各片照常跑死链检查（跨片链接按全站页面集豁免，真死链仍失败）。
 # merge 作业合并 dist、并集 hashmap.json、拼 sitemap、跑一次 pagefind → deploy。
@@ -15,6 +23,9 @@ on:
         description: '先把 docs 子模块拉到上游最新并提交指针，再构建部署'
         type: boolean
         default: false
+  schedule:
+    # 每 30 分钟一次自动同步（UTC）；指针未变时不构建，成本只有一个检出作业
+    - cron: "*/30 * * * *"
 
 # 部署到 GitHub Pages 需要 pages/id-token；sync 模式还要提交子模块指针
 permissions:
@@ -29,7 +40,8 @@ concurrency:
 
 jobs:
   sync:
-    if: ${{ inputs.sync_docs }}
+    # 定时运行一律走同步档（先拉子模块）；手动档由 sync_docs 决定
+    if: ${{ inputs.sync_docs || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.check.outputs.changed }}
