@@ -144,6 +144,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # 同 build：依赖链上出现过被 if 跳过的 job 时，缺 always() 的 job 级 if 会被
+    # 隐式 success() 短路（实测四个分片全绿，merge/deploy 仍 skipped）
+    if: ${{ always() && needs.build.result == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -196,6 +199,7 @@ jobs:
     needs: merge
     runs-on: ubuntu-latest
     name: Deploy
+    if: ${{ always() && needs.merge.result == 'success' }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
