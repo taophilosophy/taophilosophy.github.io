@@ -9,7 +9,7 @@ name: 🔗 站点部署（分片矩阵；可选先拉子模块）
 #     指针未变时整条链只跑一个 sync 作业（约 40 秒）就收工
 #   * workflow_dispatch + sync_docs=true —— 手动触发同一条同步-部署链
 #   * workflow_dispatch + sync_docs=false —— 只部署当前指针（不回拉子模块）
-# 注意：名里「自动拉取」一直指**自动拉子模块**，定时是本次新增；GitHub 的 cron
+# 注意：名里“自动拉取”一直指**自动拉子模块**，定时是本次新增；GitHub 的 cron
 # 是尽力而为（高峰可延迟数分钟），仓库连续 60 天无活动会被自动停用。
 #
 # 构建 = 4 个分片并行（SEP_SHARD=ad|ek|lp|qz，见 docs/.vitepress/config.mts）→
