@@ -21,4 +21,5 @@ bun run preview
 * 依赖只在本仓 `package.json` 声明（VitePress 2.0.0-alpha.21、pagefind 插件、MathJax 4.1.3、霞鹜文楷字体包、littlefoot）；子模块不装依赖、不持 `package.json`。
 * 构建前置由本仓脚本调用子模块里的 `docs/.vitepress/prepare-assets.mjs`（MathJax 离线资源）与 `prepare-gitstamps.mjs`（页脚时间戳），二者与 cwd 解耦。
 * 工作流在构建前 `cp docs/README.md docs/index.md`：VitePress 把 `README.md` 编成 `README.html`，Pages 站点根需要 `index.html`。
+* 内容布局（2026-11-27 起）：`docs/zh/` 为中文正文与登记册（`zh/SUMMARY.md`、`zh/mu-lu-s.md`、`zh/shu-yu-biao.md`、`zh/ren-ming-biao.md`、`zh/PROGRESS.md` 等）；`docs/en/` 为英文 Markdown 镜像；`docs/yuanwen/` 为原始 HTML。站点 URL 相应为 `/zh/…` 与 `/en/…`，构建命令与分片名不变。
 * 要预览子模块的**本地工作树**：把 `docs/` 换成目录联接（Windows `mklink /J docs C:\...\SEP-CN`；Linux `ln -sfn /path/SEP-CN docs`）后再 `bun run dev`。注意 VitePress 会解析真实路径，目录联接只用于人工 dev 预览，CI 一律用真实子模块检出。
